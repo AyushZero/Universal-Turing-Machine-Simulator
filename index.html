@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Turing Machine Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        header {
+            background: #000;
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-bottom: 2px solid #333;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.7;
+            color: #ccc;
+        }
+
+        .main-content {
+            padding: 40px;
+            background: #1a1a1a;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #fff;
+            border-radius: 2px;
+        }
+
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .card.selected {
+            border-color: #fff;
+            background: #333;
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .card h3 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .card p {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .card-meta {
+            font-size: 0.85rem;
+            color: #888;
+            font-family: 'Courier New', monospace;
+        }
+
+        .utm-display {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #444;
+        }
+
+        .tape-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            overflow-x: auto;
+            padding: 20px 0;
+        }
+
+        .tape-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .utm-tape-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            border: 1px solid #444;
+        }
+
+        .utm-tape-label {
+            font-size: 0.9rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .utm-tape {
+            display: flex;
+            gap: 3px;
+        }
+
+        .utm-cell {
+            min-width: 45px;
+            height: 45px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: #1a1a1a;
+            color: #aaa;
+            padding: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .utm-cell.machine-section {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            color: #8a9cff;
+        }
+
+        .utm-cell.input-section {
+            border-color: #64ffda;
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+        }
+
+        .utm-cell.separator {
+            border-color: #fff;
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .tape-section-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tape {
+            display: flex;
+            gap: 3px;
+            position: relative;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #666;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: #1a1a1a;
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+
+        .cell.active {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.4);
+        }
+
+        .head {
+            position: absolute;
+            bottom: -35px;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid #fff;
+            transition: left 0.5s ease;
+            animation: headBounce 1s infinite;
+        }
+
+        @keyframes headBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .state-display {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 2px solid #444;
+        }
+
+        .state-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .state-value {
+            font-size: 2rem;
+            color: #fff;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        button {
+            background: #fff;
+            border: 2px solid #fff;
+            color: #000;
+            padding: 14px 28px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+            background: #f0f0f0;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            box-shadow: none;
+        }
+
+        button.secondary:hover {
+            background: #2a2a2a;
+        }
+
+        .execution-log {
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-left: 3px solid #fff;
+            background: #2a2a2a;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .log-entry.highlight {
+            background: #3a3a3a;
+            border-left-color: #fff;
+        }
+
+        .info-box {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #fff;
+            border: 1px solid #444;
+        }
+
+        .info-box h3 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            color: #ccc;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .selection-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <b><h1>Universal Turing Machine Simulator</h1></b>
+            <h2>FLA PROJECT - BATCH 14</h2>
+        </header>
+
+        <div class="main-content">
+            <!-- Machine Selection -->
+            <div class="section">
+                <div class="section-title">Step 1: Select a Turing Machine</div>
+                <div class="selection-grid" id="machineGrid">
+                    <!-- Machine cards will be generated here -->
+                </div>
+            </div>
+
+            <!-- Tape Selection -->
+            <div class="section">
+                <div class="section-title">Step 2: Select an Input Tape</div>
+                <div class="selection-grid" id="tapeGrid">
+                    <!-- Tape cards will be generated here -->
+                </div>
+            </div>
+
+            <!-- UTM Display -->
+            <div class="section">
+                <div class="section-title">Step 3: Run the Universal Turing Machine</div>
+                
+                <div class="utm-display">
+                    <!-- UTM Tape Encoding -->
+                    <div id="utmTapeDisplay" style="display: none;">
+                        <div class="utm-tape-container">
+                            <div class="utm-tape-label">Universal Turing Machine Tape Encoding</div>
+                            <div id="utmTape" class="utm-tape"></div>
+                            <div style="display: flex; gap: 20px; margin-top: 10px;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 15px; height: 15px; background: rgba(102, 126, 234, 0.3); border: 2px solid #667eea; border-radius: 3px;"></div>
+                                    <span class="tape-section-label">Machine Description</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 15px; height: 15px; background: #fff; border: 2px solid #fff; border-radius: 3px;"></div>
+                                    <span class="tape-section-label">Separator</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <div style="width: 15px; height: 15px; background: rgba(100, 255, 218, 0.1); border: 2px solid #64ffda; border-radius: 3px;"></div>
+                                    <span class="tape-section-label">Input Data</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="state-display">
+                        <div class="state-label">Current State</div>
+                        <div class="state-value" id="currentState">—</div>
+                    </div>
+
+                    <div class="tape-container">
+                        <div class="tape" id="tape">
+                            <!-- Cells will be generated here -->
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button onclick="loadMachine()" id="loadBtn">Load Machine</button>
+                        <button onclick="stepForward()" id="stepBtn" disabled>Step Forward</button>
+                        <button onclick="runMachine()" id="runBtn" disabled>Auto Run</button>
+                        <button onclick="resetMachine()" class="secondary" id="resetBtn" disabled>Reset</button>
+                    </div>
+
+                    <div class="state-display">
+                        <div class="state-label">Steps Executed</div>
+                        <div class="state-value" id="stepCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Log -->
+            <div class="section">
+                <div class="section-title">Execution Log</div>
+                <div class="execution-log" id="executionLog">
+                    <div style="color: #999; text-align: center; padding: 20px;">
+                        Select a machine and tape, then click "Load Machine" to begin
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational Info -->
+            <div class="info-box">
+                <h3>💡 What is a Universal Turing Machine?</h3>
+                <p>A Universal Turing Machine (UTM) is a Turing machine that can simulate any other Turing machine. Instead of being built for one specific task, it reads a <em>description</em> of another machine and its input, then executes exactly what that machine would do. This is the theoretical foundation of modern programmable computers—one machine, infinite possibilities.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define Turing Machines
+        const turingMachines = [
+            {
+                id: 'wwr',
+                name: 'ww^R (Palindrome)',
+                description: 'Accepts strings where w = w^R (palindrome)',
+                states: {
+                    'q0': { 'a': ['X', 'R', 'q1'], 'b': ['X', 'R', 'q2'], '_': ['_', 'R', 'qAccept'], 'X': ['X', 'R', 'q0'], 'c': ['c', 'R', 'qReject'] },
+                    'q1': { 'a': ['a', 'R', 'q1'], 'b': ['b', 'R', 'q1'], '_': ['_', 'L', 'q3'], 'X': ['X', 'R', 'q1'], 'c': ['c', 'R', 'q1'] },
+                    'q2': { 'a': ['a', 'R', 'q2'], 'b': ['b', 'R', 'q2'], '_': ['_', 'L', 'q4'], 'X': ['X', 'R', 'q2'], 'c': ['c', 'R', 'q2'] },
+                    'q3': { 'a': ['X', 'L', 'q5'], 'b': ['b', 'L', 'qReject'], 'X': ['X', 'R', 'qAccept'], 'c': ['c', 'L', 'qReject'], '_': ['_', 'L', 'qReject'] },
+                    'q4': { 'b': ['X', 'L', 'q5'], 'a': ['a', 'L', 'qReject'], 'X': ['X', 'R', 'qAccept'], 'c': ['c', 'L', 'qReject'], '_': ['_', 'L', 'qReject'] },
+                    'q5': { 'a': ['a', 'L', 'q5'], 'b': ['b', 'L', 'q5'], 'X': ['X', 'R', 'q0'], '_': ['_', 'R', 'q0'], 'c': ['c', 'L', 'q5'] }
+                },
+                startState: 'q0',
+                acceptState: 'qAccept'
+            },
+            {
+                id: 'anbn',
+                name: 'a^n b^n',
+                description: 'Accepts L = {a^n b^n | n ≥ 1}',
+                states: {
+                    'q0': { 'a': ['X', 'R', 'q1'], 'Y': ['Y', 'R', 'q3'], '_': ['_', 'R', 'qReject'], 'b': ['b', 'R', 'qReject'], 'c': ['c', 'R', 'qReject'] },
+                    'q1': { 'a': ['a', 'R', 'q1'], 'Y': ['Y', 'R', 'q1'], 'b': ['Y', 'L', 'q2'], '_': ['_', 'L', 'qReject'], 'c': ['c', 'R', 'qReject'] },
+                    'q2': { 'a': ['a', 'L', 'q2'], 'Y': ['Y', 'L', 'q2'], 'X': ['X', 'R', 'q0'], 'b': ['b', 'L', 'qReject'], 'c': ['c', 'L', 'qReject'], '_': ['_', 'L', 'qReject'] },
+                    'q3': { 'Y': ['Y', 'R', 'q3'], '_': ['_', 'R', 'qAccept'], 'b': ['b', 'R', 'qReject'], 'a': ['a', 'R', 'qReject'], 'c': ['c', 'R', 'qReject'] }
+                },
+                startState: 'q0',
+                acceptState: 'qAccept'
+            },
+            {
+                id: 'anbncn',
+                name: 'a^n b^n c^n',
+                description: 'Accepts L = {a^n b^n c^n | n ≥ 1}',
+                states: {
+                    'q0': { 'a': ['X', 'R', 'q1'], '_': ['_', 'R', 'qReject'] },
+                    'q1': { 'a': ['a', 'R', 'q1'], 'Y': ['Y', 'R', 'q1'], 'b': ['Y', 'R', 'q2'], '_': ['_', 'L', 'qReject'] },
+                    'q2': { 'b': ['b', 'R', 'q2'], 'Z': ['Z', 'R', 'q2'], 'c': ['Z', 'L', 'q3'], '_': ['_', 'L', 'qReject'] },
+                    'q3': { 'a': ['a', 'L', 'q3'], 'b': ['b', 'L', 'q3'], 'Y': ['Y', 'L', 'q3'], 'Z': ['Z', 'L', 'q3'], 'X': ['X', 'R', 'q4'] },
+                    'q4': { 'a': ['X', 'R', 'q1'], 'Y': ['Y', 'R', 'q5'], '_': ['_', 'R', 'qReject'] },
+                    'q5': { 'Y': ['Y', 'R', 'q5'], 'Z': ['Z', 'R', 'q5'], '_': ['_', 'R', 'qAccept'], 'b': ['b', 'R', 'qReject'], 'c': ['c', 'R', 'qReject'] }
+                },
+                startState: 'q0',
+                acceptState: 'qAccept'
+            },
+            {
+                id: 'even_as',
+                name: 'Even number of a\'s',
+                description: 'Accepts strings with even number of a\'s',
+                states: {
+                    'q0': { 'a': ['a', 'R', 'q1'], 'b': ['b', 'R', 'q0'], 'c': ['c', 'R', 'q0'], '_': ['_', 'R', 'qAccept'] },
+                    'q1': { 'a': ['a', 'R', 'q0'], 'b': ['b', 'R', 'q1'], 'c': ['c', 'R', 'q1'], '_': ['_', 'R', 'qReject'] }
+                },
+                startState: 'q0',
+                acceptState: 'qAccept'
+            }
+        ];
+
+        // Define Input Tapes
+        const inputTapes = [
+            { id: 'tape1', name: 'abba', data: ['a', 'b', 'b', 'a', '_', '_', '_'], description: 'Valid palindrome' },
+            { id: 'tape2', name: 'aba', data: ['a', 'b', 'a', '_', '_', '_', '_'], description: 'Simple palindrome' },
+            { id: 'tape3', name: 'aabb', data: ['a', 'a', 'b', 'b', '_', '_', '_'], description: 'Valid a^n b^n (n=2)' },
+            { id: 'tape4', name: 'aaabbb', data: ['a', 'a', 'a', 'b', 'b', 'b', '_'], description: 'Valid a^n b^n (n=3)' },
+            { id: 'tape5', name: 'aabbcc', data: ['a', 'a', 'b', 'b', 'c', 'c', '_'], description: 'Valid a^n b^n c^n (n=2)' },
+            { id: 'tape6', name: 'abc', data: ['a', 'b', 'c', '_', '_', '_', '_'], description: 'Valid a^n b^n c^n (n=1)' },
+            { id: 'tape7', name: 'aabb (string)', data: ['a', 'a', 'b', 'b', '_', '_', '_'], description: 'Even a\'s test' },
+            { id: 'tape8', name: 'aaaa', data: ['a', 'a', 'a', 'a', '_', '_', '_'], description: 'Even a\'s (4 a\'s)' }
+        ];
+
+        // State variables
+        let selectedMachine = null;
+        let selectedTape = null;
+        let currentMachine = null;
+        let tapeData = [];
+        let headPosition = 0;
+        let currentState = null;
+        let isRunning = false;
+        let runInterval = null;
+        let stepCount = 0;
+        let executionHistory = [];
+
+        // Initialize the page
+        function init() {
+            renderMachineCards();
+            renderTapeCards();
+        }
+
+        function renderMachineCards() {
+            const grid = document.getElementById('machineGrid');
+            grid.innerHTML = turingMachines.map(machine => `
+                <div class="card" onclick="selectMachine('${machine.id}')">
+                    <h3>${machine.name}</h3>
+                    <p>${machine.description}</p>
+                    <div class="card-meta">States: ${Object.keys(machine.states).length}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderTapeCards() {
+            const grid = document.getElementById('tapeGrid');
+            grid.innerHTML = inputTapes.map(tape => `
+                <div class="card" onclick="selectTape('${tape.id}')">
+                    <h3>${tape.name}</h3>
+                    <p>${tape.description}</p>
+                    <div class="card-meta">Length: ${tape.data.filter(x => x !== '_').length} symbols</div>
+                </div>
+            `).join('');
+        }
+
+        function selectMachine(machineId) {
+            selectedMachine = turingMachines.find(m => m.id === machineId);
+            document.querySelectorAll('#machineGrid .card').forEach(card => card.classList.remove('selected'));
+            event.target.closest('.card').classList.add('selected');
+            updateLoadButton();
+        }
+
+        function selectTape(tapeId) {
+            selectedTape = inputTapes.find(t => t.id === tapeId);
+            document.querySelectorAll('#tapeGrid .card').forEach(card => card.classList.remove('selected'));
+            event.target.closest('.card').classList.add('selected');
+            updateLoadButton();
+        }
+
+        function updateLoadButton() {
+            document.getElementById('loadBtn').disabled = !(selectedMachine && selectedTape);
+        }
+
+        function loadMachine() {
+            if (!selectedMachine || !selectedTape) return;
+
+            currentMachine = selectedMachine;
+            tapeData = [...selectedTape.data];
+            headPosition = 0;
+            currentState = currentMachine.startState;
+            stepCount = 0;
+            executionHistory = [];
+
+            renderUTMTape();
+            renderTape();
+            updateStateDisplay();
+            
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('runBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = false;
+
+            addLog(`✓ Loaded: ${currentMachine.name}`, false);
+            addLog(`✓ Input: ${selectedTape.name}`, false);
+            addLog(`→ Starting state: ${currentState}`, true);
+        }
+
+        function renderUTMTape() {
+            const utmTapeElement = document.getElementById('utmTape');
+            const utmTapeDisplay = document.getElementById('utmTapeDisplay');
+            
+            utmTapeDisplay.style.display = 'block';
+            utmTapeElement.innerHTML = '';
+            
+            // Machine description encoding
+            const machineEncoding = `M:${currentMachine.id}`;
+            machineEncoding.split('').forEach(char => {
+                const cell = document.createElement('div');
+                cell.className = 'utm-cell machine-section';
+                cell.textContent = char;
+                cell.title = 'Machine Description';
+                utmTapeElement.appendChild(cell);
+            });
+            
+            // Add separator
+            const separator = document.createElement('div');
+            separator.className = 'utm-cell separator';
+            separator.textContent = '|';
+            separator.title = 'Separator';
+            utmTapeElement.appendChild(separator);
+            
+            // Input data
+            const inputData = tapeData.filter(s => s !== '_').join('');
+            inputData.split('').forEach(char => {
+                const cell = document.createElement('div');
+                cell.className = 'utm-cell input-section';
+                cell.textContent = char;
+                cell.title = 'Input Data';
+                utmTapeElement.appendChild(cell);
+            });
+        }
+
+        function renderTape() {
+            const tapeElement = document.getElementById('tape');
+            tapeElement.innerHTML = '';
+            
+            tapeData.forEach((symbol, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (index === headPosition) cell.classList.add('active');
+                cell.textContent = symbol;
+                tapeElement.appendChild(cell);
+            });
+            
+            const head = document.createElement('div');
+            head.className = 'head';
+            head.style.left = `${headPosition * 53}px`;
+            tapeElement.appendChild(head);
+        }
+
+        function updateStateDisplay() {
+            let displayState = currentState;
+            if (currentState === 'qAccept') {
+                displayState = 'ACCEPT';
+            } else if (currentState === 'qReject') {
+                displayState = 'REJECT';
+            }
+            document.getElementById('currentState').textContent = displayState;
+            document.getElementById('stepCount').textContent = stepCount;
+        }
+
+        function stepForward() {
+            if (!currentMachine) return false;
+
+            const currentSymbol = tapeData[headPosition];
+            const transition = currentMachine.states[currentState]?.[currentSymbol];
+
+            if (!transition) {
+                addLog(`✗ No transition found for state ${currentState} and symbol '${currentSymbol}'`, true);
+                addLog(`Machine halted at step ${stepCount}`, false);
+                return false;
+            }
+
+            const [writeSymbol, direction, nextState] = transition;
+
+            // Log the transition
+            addLog(`Step ${stepCount + 1}: [${currentState}, '${currentSymbol}'] → Write '${writeSymbol}', Move ${direction}, Go to ${nextState}`, false);
+
+            // Execute transition
+            tapeData[headPosition] = writeSymbol;
+            headPosition = direction === 'R' ? headPosition + 1 : headPosition - 1;
+
+            // Extend tape if needed
+            if (headPosition < 0) {
+                tapeData.unshift('_');
+                headPosition = 0;
+            } else if (headPosition >= tapeData.length) {
+                tapeData.push('_');
+            }
+
+            currentState = nextState;
+            stepCount++;
+
+            renderTape();
+            updateStateDisplay();
+
+            // Check if machine has halted
+            if (currentState === currentMachine.acceptState) {
+                addLog(`✓ Machine ACCEPTED! Final state: ACCEPT`, true);
+                document.getElementById('stepBtn').disabled = true;
+                document.getElementById('runBtn').disabled = true;
+                return false;
+            } else if (currentState === 'qReject') {
+                addLog(`✗ Machine REJECTED! Final state: REJECT`, true);
+                document.getElementById('stepBtn').disabled = true;
+                document.getElementById('runBtn').disabled = true;
+                return false;
+            }
+            
+            return true;
+        }
+
+        function runMachine() {
+            if (isRunning) {
+                stopRunning();
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('runBtn').textContent = 'Pause';
+            document.getElementById('stepBtn').disabled = true;
+
+            runInterval = setInterval(() => {
+                const shouldContinue = stepForward();
+                
+                if (!shouldContinue || stepCount > 100) {
+                    stopRunning();
+                }
+            }, 600);
+        }
+
+        function stopRunning() {
+            isRunning = false;
+            clearInterval(runInterval);
+            document.getElementById('runBtn').textContent = 'Auto Run';
+            document.getElementById('stepBtn').disabled = false;
+        }
+
+        function resetMachine() {
+            stopRunning();
+            loadMachine();
+        }
+
+        function addLog(message, highlight) {
+            const logDiv = document.getElementById('executionLog');
+            
+            // Clear placeholder
+            if (logDiv.querySelector('[style*="color: #999"]')) {
+                logDiv.innerHTML = '';
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry' + (highlight ? ' highlight' : '');
+            entry.textContent = message;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Initialize on load
+        window.onload = init;
+    </script>
+</body>
+</html>
